@@ -55,37 +55,42 @@ func run(cmd *cobra.Command, args []string) {
 	errorChan := make(chan error, 1)
 	processingDone := make(chan struct{})
 	wg1 := &sync.WaitGroup{}
+	wg2 := &sync.WaitGroup{}
 
 	wg1.Add(1)
 	go func() {
 		defer wg1.Done()
+		fmt.Println("Starting file writing")
 		if err := writeResults(ctx, resultChan, outputFile); err != nil {
 			select {
 			case errorChan <- fmt.Errorf("error writing results: %w", err):
 			default:
 			}
 		}
+		fmt.Println("Finished file writing")
 	}()
 
 	go func() {
 		wg1.Wait()
-		processingDone <- struct{}{}
 		close(processingDone)
+		fmt.Println("Processing done signal sent")
 	}()
 
-	wg2 := &sync.WaitGroup{}
 	for _, r := range ranges {
 		r := r
 		wg2.Add(1)
 		go func() {
 			defer wg2.Done()
+			fmt.Printf("Starting processing range: %s\n", r)
 			processRange(ctx, r, resultChan)
+			fmt.Printf("Finished processing range: %s\n", r)
 		}()
 	}
 
 	go func() {
 		wg2.Wait()
 		close(resultChan)
+		fmt.Println("All processing goroutines finished, resultChan closed")
 	}()
 
 	select {
@@ -100,6 +105,11 @@ func run(cmd *cobra.Command, args []string) {
 	case <-processingDone:
 		fmt.Println("All results processed and written")
 	}
+
+	// Ожидание завершения всех горутин
+	wg1.Wait()
+	wg2.Wait()
+	fmt.Println("All goroutines completed, operation finished")
 }
 
 func processRange(ctx context.Context, r string, resultChan chan<- int) {

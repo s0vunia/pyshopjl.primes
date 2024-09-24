@@ -17,8 +17,8 @@ A command-line interface (CLI) application that finds prime numbers within speci
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/prime-number-finder.git
-   cd prime-number-finder
+   git clone https://github.com/s0vunia/pyshopjl.primes.git
+   cd pyshopjl.primes
    ```
 
 2. Build the application:
